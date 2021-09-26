@@ -477,8 +477,10 @@ def train(args, model):
         torch.save(model.state_dict(), str(args.save + '.{}'.format(epoch)))
         if acc >= best_acc:
             best_acc = acc
-            logging.info('Saving best to {} with score {}'.format(args.save, best_acc))
-            torch.save(model.state_dict(), str(args.save))
+            logging.info('Saving best to {} with score {}'.format(
+                args.save, best_acc))
+            torch.save(model.state_dict(), str(
+                Path(args.save) / 'best_{}.pth'.format(epoch)))
 
 def main(args):
     model = ModelAndLoss(args).cuda()

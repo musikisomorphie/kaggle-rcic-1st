@@ -282,6 +282,7 @@ class CellularDataset(Dataset):
                 if path.exists():
                     break
             else:
+                print('wrong path', path)
                 assert 0
             images.append(cv2.imread(str(path), cv2.IMREAD_GRAYSCALE))
             assert images[-1] is not None
