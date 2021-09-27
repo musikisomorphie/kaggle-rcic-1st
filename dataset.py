@@ -62,16 +62,16 @@ def get_train_val_loader(args, predict=False):
         image = np.ascontiguousarray(image)
 
         if args.scale_aug != 1:
-            size = random.randint(round(512 * args.scale_aug), 512)
-            x = random.randint(0, 512 - size)
-            y = random.randint(0, 512 - size)
+            size = random.randint(round(256 * args.scale_aug), 256)
+            x = random.randint(0, 256 - size)
+            y = random.randint(0, 256 - size)
             image = image[x:x + size, y:y + size]
-            image = cv2.resize(image, (512, 512), interpolation=cv2.INTER_NEAREST)
+            image = cv2.resize(image, (256, 256), interpolation=cv2.INTER_NEAREST)
 
         return image
 
     def train_transform2(image):
-        a, b = np.random.normal(1, args.pw_aug[0], (6, 1, 1)), np.random.normal(0, args.pw_aug[1], (6, 1, 1))
+        a, b = np.random.normal(1, args.pw_aug[0], (3, 1, 1)), np.random.normal(0, args.pw_aug[1], (3, 1, 1))
         a, b = torch.tensor(a, dtype=torch.float32), torch.tensor(b, dtype=torch.float32)
         return image * a + b
 
@@ -275,18 +275,9 @@ class CellularDataset(Dataset):
         i = self.data_indices[i] if self.data_indices is not None else i
         d = self.data[i]
 
-        images = []
-        for channel in range(1, 7):
-            for dir in ['train', 'test']:
-                path = self.root / dir / d[0] / 'Plate{}'.format(d[1]) / '{}_s{}_w{}.png'.format(d[2], d[3], channel)
-                if path.exists():
-                    break
-            else:
-                print('wrong path', path)
-                assert 0
-            images.append(cv2.imread(str(path), cv2.IMREAD_GRAYSCALE))
-            assert images[-1] is not None
-        image = np.stack(images, axis=-1)
+        _root = Path('/raid/jiqing/Data/rxrx1_v1.0/images/')
+        path = _root / d[0] / 'Plate{}'.format(d[1]) / '{}_s{}.png'.format(d[2], d[3])
+        image = cv2.imread(str(path))
 
         if self.transform is not None:
             image = self.transform[0](image)

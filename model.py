@@ -18,13 +18,13 @@ class Model(nn.Module):
 
         if backbone.startswith('densenet'):
             channels = 96 if backbone == 'densenet161' else 64
-            first_conv = nn.Conv2d(6, channels, 7, 2, 3, bias=False)
+            first_conv = nn.Conv2d(3, channels, 7, 2, 3, bias=False)
             pretrained_backbone = getattr(torchvision.models, backbone)(pretrained=True, **kwargs)
             self.features = pretrained_backbone.features
             self.features.conv0 = first_conv
             features_num = pretrained_backbone.classifier.in_features
         elif backbone.startswith('resnet') or backbone.startswith('resnext'):
-            first_conv = nn.Conv2d(6, 64, 7, 2, 3, bias=False)
+            first_conv = nn.Conv2d(3, 64, 7, 2, 3, bias=False)
             pretrained_backbone = getattr(torchvision.models, backbone)(pretrained=True, **kwargs)
             self.features = nn.Sequential(
                 first_conv,
@@ -40,7 +40,7 @@ class Model(nn.Module):
         elif backbone.startswith('efficientnet'):
             from efficientnet_pytorch import EfficientNet
             self.efficientnet = EfficientNet.from_pretrained(backbone)
-            first_conv = nn.Conv2d(6, self.efficientnet._conv_stem.out_channels, kernel_size=3, stride=2, padding=1, bias=False)
+            first_conv = nn.Conv2d(3, self.efficientnet._conv_stem.out_channels, kernel_size=3, stride=2, padding=1, bias=False)
             self.efficientnet._conv_stem = first_conv
             self.features = self.efficientnet.extract_features
             features_num = self.efficientnet._conv_head.out_channels

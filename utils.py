@@ -71,15 +71,61 @@ def convert(root=Path('/home/histopath/Data/rxrx1/')):
 
 
 def cmp(root=Path('/home/histopath/Data')):
-    meta1 = list(pd.read_csv(root / 'rxrx1' / 'metadata.csv'))
-    meta2 = list(pd.read_csv(root / 'rxrx1_v1.0' / 'metadata.csv'))
+    meta1 = pd.read_csv(root / 'rxrx1' / 'metadata.csv')
+    meta1_dict = dict()
+    meta2 = pd.read_csv(root / 'rxrx1_v1.0' / 'metadata.csv')
+    meta2_dict = dict()
 
-    for m_id, m in enumerate(meta1):
-        assert m == meta2[m_id], '{} \n {}'.format(m, meta2[m_id])
+    # compare two versions of metadata
+    # they only differ from the 'dataset' column
+    for m in meta1.itertuples():
+        m_val = [m.well_id, m.cell_type, m.experiment,
+                 m.plate, m.well, m.site, m.sirna_id, m.sirna]
+        if m.dataset in ('train',):
+            m_val.append(m.dataset)
+        meta1_dict[m.site_id] = m_val
+    print('meta1 done')
+
+    for m in meta2.itertuples():
+        m_val = [m.well_id, m.cell_type, m.experiment,
+                 m.plate, m.well, m.site, m.sirna_id, m.sirna]
+        if m.dataset in ('train',):
+            m_val.append(m.dataset)
+        meta2_dict[m.site_id] = m_val
+    print('meta2 done')
+
+    assert set(meta1_dict.keys()) == set(meta2_dict.keys())
+    for key in meta1_dict.keys():
+        # print(meta1_dict[key], meta2_dict[key])
+        assert meta1_dict[key] == meta2_dict[key], '{} | {}'.format(
+            meta1_dict[key], meta2_dict[key])
+
+    # check if all the meta data are in the train.csv, test.csv ...
+    meta1_dict = {'test': dict(), 'train': dict()}
+    for m in meta1.itertuples():
+        meta1_dict[m.dataset][m.site_id[:-2]] = m.sirna_id
+
+    split_dict = {'test': dict(), 'train': dict()}
+    csv_lists = ['train.csv',
+                 'train_controls.csv',
+                 'test.csv',
+                 'test_controls.csv']
+    for clist in csv_lists:
+        print(clist)
+        dt = pd.read_csv(root / 'rxrx1' / clist)
+        for d in dt.itertuples():
+            if 'train' in clist:
+                split_dict['train'][d.id_code] = d.sirna
+            else:
+                split_dict['test'][d.id_code] = d.sirna
+
+    for dataset in ['train', 'test']:
+        assert set(meta1_dict[dataset].keys()) == set(
+            split_dict[dataset].keys())
 
 
 def main():
-    convert()
+    # convert()
     cmp()
 
 
