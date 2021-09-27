@@ -54,6 +54,7 @@ Ensembling both of them (`./make_submission.csv /results/dn161_0.129.output /res
 
 
 ## Comments
+### first step
 rxrx1_v1.0
 HUVEC-06/Plate1/B18_s{1,2} missing
 RPE-04/Plate3/E04_s{1,2} missing
@@ -68,3 +69,7 @@ RPE-09/Plate2/J16_s1 missing
 
 They are all excluded in the meta file
 thus delete the corresponding rows in train.csv and test.csv of rxrx1 
+
+### second step
+assign sirna to above cleaned test.csv by convert.py
+

@@ -481,6 +481,9 @@ def train(args, model):
                 args.save, best_acc))
             torch.save(model.state_dict(), str(
                 Path(args.save) / 'best_{}.pth'.format(epoch)))
+            if args.pl_epoch is not None:
+                acc_test = score(args, model, test_loader)
+                logging.info('Test score {}'.format(acc_test))
 
 def main(args):
     model = ModelAndLoss(args).cuda()
