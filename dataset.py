@@ -148,24 +148,31 @@ class CellularDataset(Dataset):
         assert mode in ['train', 'val', 'test']
         self.mode = mode
 
-        csv = pd.read_csv(self.root / ('train.csv' if mode in ['train', 'val'] else 'test.csv'))
-        csv_controls = pd.read_csv(self.root / ('train_controls.csv' if mode in ['train', 'val'] else 'test_controls.csv'))
+        csv_raw = pd.read_csv(self.root / 'metadata.csv')
+        csv_raw = csv_raw[csv_raw['site_id'].str.endswith('_1')]
+        if mode in ['train', 'val']:
+            csv = csv_raw.loc[csv_raw['dataset'] == 'train']  
+        else: 
+            csv = csv_raw.loc[csv_raw['dataset'] == 'test']  
         if all_controls:
-            csv_controls_test = pd.read_csv(self.root / 'test_controls.csv')
+            csv_controls_test = csv_raw.loc[
+                (csv_raw['dataset'] == 'test') & (csv_raw['sirna_id'] >= self.treatment_classes)]
         self.data = []  # (experiment, plate, well, site, cell_type, sirna or None)
         experiments = {}
-        for row in chain(csv.iterrows(), csv_controls.iterrows(), *([csv_controls_test.iterrows()] if all_controls else [])):
+        for row in chain(csv.iterrows(), *([csv_controls_test.iterrows()] if all_controls else [])):
             r = row[1]
             typ = r.experiment[:r.experiment.find('-')]
-            self.data.append((r.experiment, r.plate, r.well, 1, typ, r.sirna if hasattr(r, 'sirna') else None))
-            self.data.append((r.experiment, r.plate, r.well, 2, typ, r.sirna if hasattr(r, 'sirna') else None))
-            if not hasattr(r, 'sirna') or r.sirna < self.treatment_classes:
+            self.data.append((r.experiment, r.plate, r.well, 1, typ, r.sirna_id if hasattr(r, 'sirna_id') else None))
+            self.data.append((r.experiment, r.plate, r.well, 2, typ, r.sirna_id if hasattr(r, 'sirna_id') else None))
+            if not hasattr(r, 'sirna_id') or r.sirna_id < self.treatment_classes:
                 if typ not in experiments:
                     experiments[typ] = set()
                 experiments[typ].add(r.experiment)
         if mode in ['train', 'val']:
             data_dict = {(e, p, w): sir for e, p, w, s, typ, sir in self.data}
-            for row in pd.read_csv(self.root / 'test.csv').iterrows():
+            csv_test = csv_raw.loc[(csv_raw['dataset'] == 'test') & (
+                csv_raw['sirna_id'] < self.treatment_classes)]
+            for row in csv_test.iterrows():
                 r = row[1]
                 typ = r.experiment[:r.experiment.find('-')]
                 if r.experiment == 'HUVEC-18':
@@ -177,14 +184,16 @@ class CellularDataset(Dataset):
                         experiments[typ] = set()
                     experiments[typ].add(r.experiment)
             if not all_controls:
-                for row in pd.read_csv(self.root / 'test_controls.csv').iterrows():
+                csv_test = csv_raw.loc[(csv_raw['dataset'] == 'test') & (
+                    csv_raw['sirna_id'] >= self.treatment_classes)]
+                for row in csv_test.iterrows():
                     r = row[1]
                     typ = r.experiment[:r.experiment.find('-')]
                     if r.experiment == 'HUVEC-18':
                         sirna = data_dict[('RPE-03', (r.plate - 2) % 4 + 1, r.well)]
-                        assert sirna == r.sirna or sirna == 1138 or r.sirna == 1138
-                        self.data.append((r.experiment, r.plate, r.well, 1, typ, r.sirna))
-                        self.data.append((r.experiment, r.plate, r.well, 2, typ, r.sirna))
+                        assert sirna == r.sirna_id or sirna == 1138 or r.sirna_id == 1138
+                        self.data.append((r.experiment, r.plate, r.well, 1, typ, r.sirna_id))
+                        self.data.append((r.experiment, r.plate, r.well, 2, typ, r.sirna_id))
         if exclude_leak:
             self.data = list(filter(lambda x: x[0] != 'HUVEC-18', self.data))
 
@@ -275,8 +284,7 @@ class CellularDataset(Dataset):
         i = self.data_indices[i] if self.data_indices is not None else i
         d = self.data[i]
 
-        _root = Path('/raid/jiqing/Data/rxrx1_v1.0/images/')
-        path = _root / d[0] / 'Plate{}'.format(d[1]) / '{}_s{}.png'.format(d[2], d[3])
+        path = self.root / 'images' / d[0] / 'Plate{}'.format(d[1]) / '{}_s{}.png'.format(d[2], d[3])
         image = cv2.imread(str(path))
 
         if self.transform is not None:
