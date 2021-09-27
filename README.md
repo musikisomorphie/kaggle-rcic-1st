@@ -51,3 +51,20 @@ python main.py --mode predict --cv-number -1 --tta 8 --load /results/dn161_1.129
 results in submission with 0.99623 private score and 0.98871 public score.
 
 Ensembling both of them (`./make_submission.csv /results/dn161_0.129.output /results/dn161_1.129.output -o /results/submission.csv`) results in 0.99784 private score and 0.99187 public score.
+
+
+## Comments
+rxrx1_v1.0
+HUVEC-06/Plate1/B18_s{1,2} missing
+RPE-04/Plate3/E04_s{1,2} missing
+HUVEC-18/Plate3/D23_s{1,2} missing
+RPE-09/Plate2/J16_s{1,2} missing
+
+rxrx1
+HUVEC-06/Plate1/B18_s2 missing
+RPE-04/Plate3/E04_s1 missing
+HUVEC-18/Plate3/D23_s1 missing
+RPE-09/Plate2/J16_s1 missing
+
+They are all excluded in the meta file
+thus delete the corresponding rows in train.csv and test.csv of rxrx1 

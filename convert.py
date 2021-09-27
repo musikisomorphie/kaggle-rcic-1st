@@ -18,32 +18,35 @@ from torchvision import transforms
 import precomputed as P
 
 
-def convert(root=Path('/mnt/sda1/Data/rxrx1/')):
-    # meta = pd.read_csv(root / 'metadata.csv')
-    # meta_dict = dict()
-    # for m in meta.itertuples():
-    #     # print(m.site_id, m.sirna_id)
-    #     if m.site_id[:-2] in meta_dict:
-    #         assert m.sirna_id == meta_dict[m.site_id[:-2]]
-    #     meta_dict[m.site_id[:-2]] = m.sirna_id
+def convert(root=Path('/home/histopath/Data/rxrx1/')):
+    meta = pd.read_csv(root / 'metadata.csv')
+    meta_dict = dict()
+    for m in meta.itertuples():
+        # print(m.site_id, m.sirna_id)
+        if m.site_id[:-2] in meta_dict:
+            assert m.sirna_id == meta_dict[m.site_id[:-2]]
+        else:
+            meta_dict[m.site_id[:-2]] = m.sirna_id
 
-    # csv_lists = ['train.csv', 'train_controls.csv', 'test_controls.csv']
-    # for clist in csv_lists:
-    #     print(clist)
-    #     dt = pd.read_csv(root / 'old' / clist)
-    #     for d_idx, d in dt.iterrows():
-    #         # print(d.id_code)
-    #         if d['id_code'] not in meta_dict:
-    #             print(d)
-    #             continue
-    #         else:
-    #             dt.at[d_idx, 'sirna'] = meta_dict[d['id_code']]
-    #             # d['sirna'] = meta_dict[d['id_code']]
-    #     dt.to_csv(str(root/clist), index=False)
-    csv_lists = ['train.csv', 'train_controls.csv', 'test_controls.csv', 'test.csv']
+    csv_lists = ['train.csv', 'train_controls.csv', 'test_controls.csv']
     for clist in csv_lists:
         print(clist)
-        dt = pd.read_csv(root /  clist)
+        dt = pd.read_csv(root / 'old' / clist)
+        for d_idx, d in dt.iterrows():
+            # print(d.id_code)
+            if d['id_code'] not in meta_dict:
+                print(d)
+                continue
+            else:
+                dt.at[d_idx, 'sirna'] = meta_dict[d['id_code']]
+                # d['sirna'] = meta_dict[d['id_code']]
+        dt.to_csv(str(root/clist), index=False)
+
+    csv_lists = ['train.csv', 'train_controls.csv',
+                 'test_controls.csv', 'test.csv']
+    for clist in csv_lists:
+        print(clist)
+        dt = pd.read_csv(root / clist)
         for d_idx, d in dt.iterrows():
             for channel in range(1, 7):
                 if 'train' in clist:
@@ -58,8 +61,17 @@ def convert(root=Path('/mnt/sda1/Data/rxrx1/')):
                         print(clist, path)
 
 
+def cmp(root=Path('/home/histopath/Data')):
+    meta1 = list(pd.read_csv(root / 'rxrx1' / 'metadata.csv'))
+    meta2 = list(pd.read_csv(root / 'rxrx1_v1.0' / 'metadata.csv'))
+
+    for m_id, m in enumerate(meta1):
+        assert m == meta2[m_id], '{} \n {}'.format(m, meta2[m_id])
+
+
 def main():
     convert()
+    cmp()
 
 
 if __name__ == '__main__':

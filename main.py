@@ -13,7 +13,7 @@ from pathlib import Path
 
 import numpy as np
 import torch
-from apex import amp
+# from apex import amp
 from torch import nn
 
 import dataset
