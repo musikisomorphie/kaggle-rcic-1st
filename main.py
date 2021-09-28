@@ -53,7 +53,7 @@ def parse_args():
 
     parser.add_argument('--classes', type=int, default=1139,
             help='number of classes predicting by the network')
-    parser.add_argument('--fp16', type=bool_type, default=True,
+    parser.add_argument('--fp16', type=bool_type, default=False,
             help='mixed precision training/inference')
     parser.add_argument('--disp-batches', type=int, default=50,
             help='frequency (in iterations) of printing statistics of training / inference '
@@ -80,7 +80,7 @@ def parse_args():
     parser.add_argument('--scale-aug', type=float, default=0.5,
             help='zoom augmentation. Scale will be sampled from uniform(scale, 1). '
                  'Scale is a scale for edge (preserving aspect)')
-    parser.add_argument('--all-controls-train', type=bool_type, default=True,
+    parser.add_argument('--all-controls-train', type=bool_type, default=False,
             help='train using all control images (also these from the test set)')
     parser.add_argument('--data-normalization', choices=('global', 'experiment', 'sample'), default='sample',
             help='image normalization type: '
@@ -139,9 +139,9 @@ def setup_logging(args):
     head = '{asctime}:{levelname}: {message}'
     handlers = [logging.StreamHandler(sys.stderr)]
     if args.mode == 'train':
-        handlers.append(logging.FileHandler(args.save + '.log', mode='w'))
+        handlers.append(logging.FileHandler(str(Path(args.save) / '.log'), mode='w'))
     if args.mode == 'predict':
-        handlers.append(logging.FileHandler(args.load + '.output.log', mode='w'))
+        handlers.append(logging.FileHandler(str(Path(args.load) / '.output.log'), mode='w'))
     logging.basicConfig(level=logging.DEBUG, format=head, style='{', handlers=handlers)
     logging.info('Start with arguments {}'.format(args))
 
@@ -474,13 +474,13 @@ def train(args, model):
                 tic = time.time()
 
         acc = score(args, model, val_loader)
-        torch.save(model.state_dict(), str(args.save + '.{}'.format(epoch)))
+        # torch.save(model.state_dict(), str(args.save + '.{}'.format(epoch)))
         if acc >= best_acc:
             best_acc = acc
             logging.info('Saving best to {} with score {}'.format(
                 args.save, best_acc))
-            torch.save(model.state_dict(), str(
-                Path(args.save) / 'best_{}.pth'.format(epoch)))
+            # torch.save(model.state_dict(), str(
+            #     Path(args.save) / 'best_{}.pth'.format(epoch)))
             if args.pl_epoch is not None:
                 acc_test = score(args, model, test_loader)
                 logging.info('Test score {}'.format(acc_test))

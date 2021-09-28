@@ -153,7 +153,7 @@ class CellularDataset(Dataset):
         if mode in ['train', 'val']:
             csv = csv_raw.loc[csv_raw['dataset'] == 'train']  
         else: 
-            csv = csv_raw.loc[csv_raw['dataset'] == 'test']  
+            csv = csv_raw.loc[csv_raw['dataset'] == 'val']  
         if all_controls:
             csv_controls_test = csv_raw.loc[
                 (csv_raw['dataset'] == 'test') & (csv_raw['sirna_id'] >= self.treatment_classes)]
@@ -163,7 +163,7 @@ class CellularDataset(Dataset):
             r = row[1]
             typ = r.experiment[:r.experiment.find('-')]
             self.data.append((r.experiment, r.plate, r.well, 1, typ, r.sirna_id if hasattr(r, 'sirna_id') else None))
-            self.data.append((r.experiment, r.plate, r.well, 2, typ, r.sirna_id if hasattr(r, 'sirna_id') else None))
+            # self.data.append((r.experiment, r.plate, r.well, 2, typ, r.sirna_id if hasattr(r, 'sirna_id') else None))
             if not hasattr(r, 'sirna_id') or r.sirna_id < self.treatment_classes:
                 if typ not in experiments:
                     experiments[typ] = set()
@@ -179,7 +179,7 @@ class CellularDataset(Dataset):
                     sirna = data_dict[('RPE-03', (r.plate - 2) % 4 + 1, r.well)]
                     assert sirna < self.treatment_classes
                     self.data.append((r.experiment, r.plate, r.well, 1, typ, sirna))
-                    self.data.append((r.experiment, r.plate, r.well, 2, typ, sirna))
+                    # self.data.append((r.experiment, r.plate, r.well, 2, typ, sirna))
                     if typ not in experiments:
                         experiments[typ] = set()
                     experiments[typ].add(r.experiment)
@@ -193,7 +193,7 @@ class CellularDataset(Dataset):
                         sirna = data_dict[('RPE-03', (r.plate - 2) % 4 + 1, r.well)]
                         assert sirna == r.sirna_id or sirna == 1138 or r.sirna_id == 1138
                         self.data.append((r.experiment, r.plate, r.well, 1, typ, r.sirna_id))
-                        self.data.append((r.experiment, r.plate, r.well, 2, typ, r.sirna_id))
+                        # self.data.append((r.experiment, r.plate, r.well, 2, typ, r.sirna_id))
         if exclude_leak:
             self.data = list(filter(lambda x: x[0] != 'HUVEC-18', self.data))
 
