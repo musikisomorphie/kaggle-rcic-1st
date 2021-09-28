@@ -309,8 +309,9 @@ class CellularDataset(Dataset):
         if self.transform is not None:
             image = self.transform[1](image)
 
-        cell_type = nn.functional.one_hot(torch.tensor(self.cell_types.index(d[-2]), dtype=torch.long),
-                len(self.cell_types)).float()
+        # cell_type = nn.functional.one_hot(torch.tensor(self.cell_types.index(d[-2]), dtype=torch.long),
+        #         len(self.cell_types)).float()
+        cell_type = torch.tensor([1, 0, 0, 0]).float()
 
         r = [image, cell_type, torch.tensor(i, dtype=torch.long)]
         if self.mode != 'test':
