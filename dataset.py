@@ -137,7 +137,7 @@ class CellularDataset(Dataset):
             move_controls = True
             all_controls = True
         else:
-            move_controls = False
+            move_controls = True
             all_controls = False
 
         if mode == 'test_noleak':
@@ -168,34 +168,34 @@ class CellularDataset(Dataset):
                 if typ not in experiments:
                     experiments[typ] = set()
                 experiments[typ].add(r.experiment)
-        if mode in ['train', 'val']:
-            data_dict = {(e, p, w): sir for e, p, w, s, typ, sir in self.data}
-            csv_test = csv_raw.loc[(csv_raw['dataset'] == 'test') & (
-                csv_raw['sirna_id'] < self.treatment_classes)]
-            for row in csv_test.iterrows():
-                r = row[1]
-                typ = r.experiment[:r.experiment.find('-')]
-                if r.experiment == 'HUVEC-18':
-                    sirna = data_dict[('RPE-03', (r.plate - 2) % 4 + 1, r.well)]
-                    assert sirna < self.treatment_classes
-                    self.data.append((r.experiment, r.plate, r.well, 1, typ, sirna))
-                    # self.data.append((r.experiment, r.plate, r.well, 2, typ, sirna))
-                    if typ not in experiments:
-                        experiments[typ] = set()
-                    experiments[typ].add(r.experiment)
-            if not all_controls:
-                csv_test = csv_raw.loc[(csv_raw['dataset'] == 'test') & (
-                    csv_raw['sirna_id'] >= self.treatment_classes)]
-                for row in csv_test.iterrows():
-                    r = row[1]
-                    typ = r.experiment[:r.experiment.find('-')]
-                    if r.experiment == 'HUVEC-18':
-                        sirna = data_dict[('RPE-03', (r.plate - 2) % 4 + 1, r.well)]
-                        assert sirna == r.sirna_id or sirna == 1138 or r.sirna_id == 1138
-                        self.data.append((r.experiment, r.plate, r.well, 1, typ, r.sirna_id))
-                        # self.data.append((r.experiment, r.plate, r.well, 2, typ, r.sirna_id))
-        if exclude_leak:
-            self.data = list(filter(lambda x: x[0] != 'HUVEC-18', self.data))
+        # if mode in ['train', 'val']:
+        #     data_dict = {(e, p, w): sir for e, p, w, s, typ, sir in self.data}
+        #     csv_test = csv_raw.loc[(csv_raw['dataset'] == 'test') & (
+        #         csv_raw['sirna_id'] < self.treatment_classes)]
+        #     for row in csv_test.iterrows():
+        #         r = row[1]
+        #         typ = r.experiment[:r.experiment.find('-')]
+        #         if r.experiment == 'HUVEC-18':
+        #             sirna = data_dict[('RPE-03', (r.plate - 2) % 4 + 1, r.well)]
+        #             assert sirna < self.treatment_classes
+        #             self.data.append((r.experiment, r.plate, r.well, 1, typ, sirna))
+        #             # self.data.append((r.experiment, r.plate, r.well, 2, typ, sirna))
+        #             if typ not in experiments:
+        #                 experiments[typ] = set()
+        #             experiments[typ].add(r.experiment)
+        #     if not all_controls:
+        #         csv_test = csv_raw.loc[(csv_raw['dataset'] == 'test') & (
+        #             csv_raw['sirna_id'] >= self.treatment_classes)]
+        #         for row in csv_test.iterrows():
+        #             r = row[1]
+        #             typ = r.experiment[:r.experiment.find('-')]
+        #             if r.experiment == 'HUVEC-18':
+        #                 sirna = data_dict[('RPE-03', (r.plate - 2) % 4 + 1, r.well)]
+        #                 assert sirna == r.sirna_id or sirna == 1138 or r.sirna_id == 1138
+        #                 self.data.append((r.experiment, r.plate, r.well, 1, typ, r.sirna_id))
+        #                 # self.data.append((r.experiment, r.plate, r.well, 2, typ, r.sirna_id))
+        # if exclude_leak:
+        #     self.data = list(filter(lambda x: x[0] != 'HUVEC-18', self.data))
 
         self.cell_types = sorted(experiments.keys())
         all_data = self.data.copy()
@@ -210,12 +210,12 @@ class CellularDataset(Dataset):
                 state.shuffle(cells[i])
 
             # cell[i] is a list of experiments for i-th cell type
-            assert list(map(len, cells)) == [7, 17, 7, 6]
+            assert list(map(len, cells)) == [7, 16, 7, 6]
 
             # counts of experiments from given cell type for given fold
             counts = [
                 [2, 2, 1, 1],
-                [1, 3, 2, 1],
+                [1, 2, 2, 1],
                 [1, 3, 1, 1],
                 [1, 3, 1, 1],
                 [1, 3, 1, 1],
@@ -231,7 +231,7 @@ class CellularDataset(Dataset):
                               sorted(cells[3][start[3]:start[3] + count[3]]))
                 for i in range(4):
                     start[i] += count[i]
-            assert start == [7, 17, 7, 6]
+            assert start == [7, 16, 7, 6]
             logging.info('Splits: {}'.format(splits))
 
             if cv_number != -1:
@@ -256,12 +256,12 @@ class CellularDataset(Dataset):
         assert len(set(self.data)) == len(self.data)
         assert len(set(all_data)) == len(all_data)
 
-        controls = list(filter(lambda d: d[-1] is not None and d[-1] >= self.treatment_classes,
-            (all_data if all_controls else self.data)))
-        self.data = list(filter(lambda d: not (d[-1] is not None and d[-1] >= self.treatment_classes),
-            self.data))
-        if move_controls:
-            self.data += controls
+        # controls = list(filter(lambda d: d[-1] is not None and d[-1] >= self.treatment_classes,
+        #     (all_data if all_controls else self.data)))
+        # self.data = list(filter(lambda d: not (d[-1] is not None and d[-1] >= self.treatment_classes),
+        #     self.data))
+        # if move_controls:
+        #     self.data += controls
 
         self.filter()
 

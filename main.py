@@ -20,6 +20,7 @@ import dataset
 import precomputed as P
 from model import ModelAndLoss
 
+
 def parse_args():
     def lr_type(x):
         x = x.split(',')
@@ -33,13 +34,14 @@ def parse_args():
         raise ValueError()
 
     parser = ArgumentParser()
-    parser.add_argument('-m', '--mode', default='train', choices=('train', 'val', 'predict'))
+    parser.add_argument('-m', '--mode', default='train',
+                        choices=('train', 'val', 'predict'))
     parser.add_argument('--backbone', default='mem-densenet161',
-            help='backbone for the architecture. '
-                 'Supported backbones: ResNets, ResNeXts, DenseNets (from torchvision), EfficientNets. '
-                 'For DenseNets, add prefix "mem-" for memory efficient version')
+                        help='backbone for the architecture. '
+                        'Supported backbones: ResNets, ResNeXts, DenseNets (from torchvision), EfficientNets. '
+                        'For DenseNets, add prefix "mem-" for memory efficient version')
     parser.add_argument('--head-hidden', type=lambda x: None if not x else list(map(int, x.split(','))),
-            help='hidden layers sizes in the head. Defaults to absence of hidden layers')
+                        help='hidden layers sizes in the head. Defaults to absence of hidden layers')
     parser.add_argument('--concat-cell-type', type=bool_type, default=True)
     parser.add_argument('--metric-loss-coeff', type=float, default=0.2)
     parser.add_argument('--embedding-size', type=int, default=1024)
@@ -47,79 +49,79 @@ def parse_args():
     parser.add_argument('--wd', '--weight-decay', type=float, default=1e-5)
     parser.add_argument('--label-smoothing', '--ls', type=float, default=0)
     parser.add_argument('--mixup', type=float, default=0,
-            help='alpha parameter for mixup. 0 means no mixup')
+                        help='alpha parameter for mixup. 0 means no mixup')
     parser.add_argument('--cutmix', type=float, default=1,
-            help='parameter for beta distribution. 0 means no cutmix')
+                        help='parameter for beta distribution. 0 means no cutmix')
 
     parser.add_argument('--classes', type=int, default=1139,
-            help='number of classes predicting by the network')
+                        help='number of classes predicting by the network')
     parser.add_argument('--fp16', type=bool_type, default=False,
-            help='mixed precision training/inference')
+                        help='mixed precision training/inference')
     parser.add_argument('--disp-batches', type=int, default=50,
-            help='frequency (in iterations) of printing statistics of training / inference '
-                 '(e.g. accuracy, loss, speed)')
+                        help='frequency (in iterations) of printing statistics of training / inference '
+                        '(e.g. accuracy, loss, speed)')
 
     parser.add_argument('--tta', type=int,
-            help='number of TTAs. Flips, 90 degrees rotations and resized crops (for --tta-size != 1) are applied')
+                        help='number of TTAs. Flips, 90 degrees rotations and resized crops (for --tta-size != 1) are applied')
     parser.add_argument('--tta-size', type=float, default=1,
-            help='crop percentage for TTA')
+                        help='crop percentage for TTA')
 
     parser.add_argument('--save',
-            help='path for the checkpoint with best accuracy. '
-                 'Checkpoint for each epoch will be saved with suffix .<number of epoch>')
+                        help='path for the checkpoint with best accuracy. '
+                        'Checkpoint for each epoch will be saved with suffix .<number of epoch>')
     parser.add_argument('--load',
-            help='path to the checkpoint which will be loaded for inference or fine-tuning')
+                        help='path to the checkpoint which will be loaded for inference or fine-tuning')
     parser.add_argument('--start-epoch', type=int, default=0)
     parser.add_argument('--pred-suffix', default='',
-            help='suffix for prediction output. '
-                 'Predictions output will be stored in <loaded checkpoint path>.output<pred suffix>')
+                        help='suffix for prediction output. '
+                        'Predictions output will be stored in <loaded checkpoint path>.output<pred suffix>')
 
     parser.add_argument('--pw-aug', type=lambda x: tuple(map(float, x.split(','))), default=(0.1, 0.1),
-            help='pixel-wise augmentation in format (scale std, bias std). scale will be sampled from N(1, scale_std) '
-                 'and bias from N(0, bias_std) for each channel independently')
+                        help='pixel-wise augmentation in format (scale std, bias std). scale will be sampled from N(1, scale_std) '
+                        'and bias from N(0, bias_std) for each channel independently')
     parser.add_argument('--scale-aug', type=float, default=0.5,
-            help='zoom augmentation. Scale will be sampled from uniform(scale, 1). '
-                 'Scale is a scale for edge (preserving aspect)')
+                        help='zoom augmentation. Scale will be sampled from uniform(scale, 1). '
+                        'Scale is a scale for edge (preserving aspect)')
     parser.add_argument('--all-controls-train', type=bool_type, default=False,
-            help='train using all control images (also these from the test set)')
+                        help='train using all control images (also these from the test set)')
     parser.add_argument('--data-normalization', choices=('global', 'experiment', 'sample'), default='sample',
-            help='image normalization type: '
-                 'global -- use statistics from entire dataset, '
-                 'experiment -- use statistics from experiment, '
-                 'sample -- use mean and std calculated on given example (after normalization)')
+                        help='image normalization type: '
+                        'global -- use statistics from entire dataset, '
+                        'experiment -- use statistics from experiment, '
+                        'sample -- use mean and std calculated on given example (after normalization)')
     parser.add_argument('--data', type=Path, default=Path('../data'),
-            help='path to the data root. It assumes format like in Kaggle with unpacked archives')
+                        help='path to the data root. It assumes format like in Kaggle with unpacked archives')
     parser.add_argument('--cv-number', type=int, default=0, choices=(-1, 0, 1, 2, 3, 4, 5),
-            help='number of fold in 6-fold split. '
-                 'For number of given cell type experiment in certain fold see dataset.py file. '
-                 '-1 means not using validation set (training on all data)')
+                        help='number of fold in 6-fold split. '
+                        'For number of given cell type experiment in certain fold see dataset.py file. '
+                        '-1 means not using validation set (training on all data)')
     parser.add_argument('--data-split-seed', type=int, default=0,
-            help='seed for splitting experiments for folds')
+                        help='seed for splitting experiments for folds')
     parser.add_argument('--num-data-workers', type=int, default=10,
-            help='number of data loader workers')
+                        help='number of data loader workers')
     parser.add_argument('--seed', type=int,
-            help='global seed (for weight initialization, data sampling, etc.). '
-                 'If not specified it will be randomized (and printed on the log)')
+                        help='global seed (for weight initialization, data sampling, etc.). '
+                        'If not specified it will be randomized (and printed on the log)')
 
     parser.add_argument('--pl-epoch', type=int, default=None,
-            help='first epoch where pseudo-labeling starts')
+                        help='first epoch where pseudo-labeling starts')
     parser.add_argument('--pl-size-func', type=str, default='x',
-            help='function indicating percentage of the test set transferred to the training set. '
-                 'Function is called once an epoch and argument "x" is number from 0 to 1 indicating '
-                 'training progress (0 is first epoch of pseudo-labeling, and 1 is last epoch of traning). '
-                 'For example: "x" -- constant number of test examples is added each epoch; '
-                 '"x*0.6+0.4" -- 40% of test set added at the begining of pseudo-labeling and '
-                 'then constant number each epoch')
+                        help='function indicating percentage of the test set transferred to the training set. '
+                        'Function is called once an epoch and argument "x" is number from 0 to 1 indicating '
+                        'training progress (0 is first epoch of pseudo-labeling, and 1 is last epoch of traning). '
+                        'For example: "x" -- constant number of test examples is added each epoch; '
+                        '"x*0.6+0.4" -- 40% of test set added at the begining of pseudo-labeling and '
+                        'then constant number each epoch')
 
     parser.add_argument('-b', '--batch_size', type=int, default=24)
     parser.add_argument('--gradient-accumulation', type=int, default=2,
-            help='number of iterations for gradient accumulation')
+                        help='number of iterations for gradient accumulation')
     parser.add_argument('-e', '--epochs', type=int, default=90)
     parser.add_argument('-l', '--lr', type=lr_type, default=('cosine', [1.5e-4]),
-            help='learning rate values and schedule given in format: schedule,value1,epoch1,value2,epoch2,...,value{n}. '
-                 'in epoch range [0, epoch1) initial_lr=value1, in [epoch1, epoch2) initial_lr=value2, ..., '
-                 'in [epoch{n-1}, total_epochs) initial_lr=value{n}, '
-                 'in every range the same learning schedule is used. Possible schedules: cosine, const')
+                        help='learning rate values and schedule given in format: schedule,value1,epoch1,value2,epoch2,...,value{n}. '
+                        'in epoch range [0, epoch1) initial_lr=value1, in [epoch1, epoch2) initial_lr=value2, ..., '
+                        'in [epoch{n-1}, total_epochs) initial_lr=value{n}, '
+                        'in every range the same learning schedule is used. Possible schedules: cosine, const')
     args = parser.parse_args()
 
     if args.mode == 'train':
@@ -135,15 +137,21 @@ def parse_args():
 
     return args
 
+
 def setup_logging(args):
+    save_dir = Path(args.save)
+    save_dir.mkdir(parents=True, exist_ok=True)
     head = '{asctime}:{levelname}: {message}'
     handlers = [logging.StreamHandler(sys.stderr)]
     if args.mode == 'train':
-        handlers.append(logging.FileHandler(str(Path(args.save) / '.log'), mode='w'))
+        handlers.append(logging.FileHandler(str(save_dir / 'log'), mode='w'))
     if args.mode == 'predict':
-        handlers.append(logging.FileHandler(str(Path(args.load) / '.output.log'), mode='w'))
-    logging.basicConfig(level=logging.DEBUG, format=head, style='{', handlers=handlers)
+        handlers.append(logging.FileHandler(
+            str(save_dir / 'output_log'), mode='w'))
+    logging.basicConfig(level=logging.DEBUG, format=head,
+                        style='{', handlers=handlers)
     logging.info('Start with arguments {}'.format(args))
+
 
 def setup_determinism(args):
     torch.backends.cudnn.deterministic = True
@@ -167,7 +175,8 @@ def infer(args, model, loader):
         X = X.cuda()
         S = S.cuda()
 
-        Xs = dataset.tta(args, X) if args.tta else [X]
+        # Xs = dataset.tta(args, X) if args.tta else [X]
+        Xs = [X]
         ys = [model.eval_forward(X, S) for X in Xs]
         y = torch.stack(ys).mean(0).cpu()
 
@@ -189,9 +198,6 @@ def predict(args, model):
     test_loader = dataset.get_test_loader(args)
     train_loader, val_loader = dataset.get_train_val_loader(args, predict=True)
 
-    if args.fp16:
-        model = amp.initialize(model, opt_level='O1')
-
     logging.info('Starting prediction')
 
     output = {}
@@ -207,7 +213,8 @@ def predict(args, model):
                 output[k][name] = []
             output[k][name].append(v)
 
-    logging.info('Saving predictions to {}'.format(args.load + '.output' + args.pred_suffix))
+    logging.info('Saving predictions to {}'.format(
+        args.load + '.output' + args.pred_suffix))
     with open(args.load + '.output' + args.pred_suffix, 'wb') as file:
         pickle.dump(output, file)
 
@@ -219,17 +226,20 @@ def score(args, model, loader):
 
     res = infer(args, model, loader)
 
-    cell_type_c = np.array([0, 0, 0, 0])  # number of examples for given cell type
-    cell_type_s = np.array([0, 0, 0, 0])  # number of correctly classified examples for given cell type
+    # number of examples for given cell type
+    cell_type_c = np.array([0, 0, 0, 0])
+    # number of correctly classified examples for given cell type
+    cell_type_s = np.array([0, 0, 0, 0])
     for i, v in res.items():
         d = loader.dataset.data[i]
-        r = v[:loader.dataset.treatment_classes].argmax() == d[-1]
+        r = v.argmax() == d[-1]
 
         ser = loader.dataset.cell_types.index(d[4])
         cell_type_c[ser] += 1
         cell_type_s[ser] += r
 
-    acc = (cell_type_s.sum() / cell_type_c.sum()).item() if cell_type_c.sum() != 0 else 0
+    acc = (cell_type_s.sum() / cell_type_c.sum()
+           ).item() if cell_type_c.sum() != 0 else 0
     logging.info('Eval: acc: {} ({})'.format(cell_type_s / cell_type_c, acc))
     return acc
 
@@ -249,12 +259,15 @@ def get_learning_rate(args, epoch):
                 assert 0
     assert 0
 
+
 @torch.no_grad()
 def smooth_label(args, Y):
     nY = nn.functional.one_hot(Y, args.classes).float()
     nY += args.label_smoothing / (args.classes - 1)
-    nY[range(Y.size(0)), Y] -= args.label_smoothing / (args.classes - 1) + args.label_smoothing
+    nY[range(Y.size(0)), Y] -= args.label_smoothing / \
+        (args.classes - 1) + args.label_smoothing
     return nY
+
 
 @torch.no_grad()
 def transform_input(args, X, S, Y):
@@ -266,10 +279,12 @@ def transform_input(args, X, S, Y):
         perm = torch.randperm(args.batch_size).cuda()
 
     if args.mixup != 0:
-        coeffs = torch.tensor(np.random.beta(args.mixup, args.mixup, args.batch_size), dtype=torch.float32).cuda()
-        X = coeffs.view(-1, 1, 1, 1) * X + (1 - coeffs.view(-1, 1, 1, 1)) * X[perm,]
-        S = coeffs.view(-1, 1) * S + (1 - coeffs.view(-1, 1)) * S[perm,]
-        Y = coeffs.view(-1, 1) * Y + (1 - coeffs.view(-1, 1)) * Y[perm,]
+        coeffs = torch.tensor(np.random.beta(
+            args.mixup, args.mixup, args.batch_size), dtype=torch.float32).cuda()
+        X = coeffs.view(-1, 1, 1, 1) * X + \
+            (1 - coeffs.view(-1, 1, 1, 1)) * X[perm, ]
+        S = coeffs.view(-1, 1) * S + (1 - coeffs.view(-1, 1)) * S[perm, ]
+        Y = coeffs.view(-1, 1) * Y + (1 - coeffs.view(-1, 1)) * Y[perm, ]
 
     if args.cutmix != 0:
         img_height, img_width = X.size()[2:]
@@ -291,6 +306,7 @@ def transform_input(args, X, S, Y):
 
     return X, S, Y
 
+
 def pseudo_label(args, epoch, pl_data, model, val_loader, test_loader, train_loader):
     """Pseudo-label some test and validation examples and move them to the training set"""
 
@@ -310,8 +326,8 @@ def pseudo_label(args, epoch, pl_data, model, val_loader, test_loader, train_loa
     test_res = sorted(test_res.items())
     val_res = sorted(val_res.items())
 
-
-    set_classes = defaultdict(lambda: [])  # classes that are already in the training set for the plate
+    # classes that are already in the training set for the plate
+    set_classes = defaultdict(lambda: [])
     for j in range(len(train_loader.dataset.data)):
         experiment_plate = train_loader.dataset.data[j][:2]
         sirna = train_loader.dataset.data[j][-1]
@@ -339,7 +355,8 @@ def pseudo_label(args, epoch, pl_data, model, val_loader, test_loader, train_loa
             experiment = loader.dataset.data[i][0]
             class_group_id = P.group_assignment[experiment][plate]
             possible_classes = P.groups[class_group_id]
-            remaining_classes = list(set(range(loader.dataset.treatment_classes)) - possible_classes)
+            remaining_classes = list(
+                set(range(loader.dataset.treatment_classes)) - possible_classes)
             logits[remaining_classes] = -10e6
 
             experiment_plate = loader.dataset.data[i][:2]
@@ -352,11 +369,12 @@ def pseudo_label(args, epoch, pl_data, model, val_loader, test_loader, train_loa
             c = logits[-1] - logits[-2]
             confs.append(((k, i - 1), c, r))
 
-
     x = (epoch - args.pl_epoch + 1) / (args.epochs - args.pl_epoch + 1)
-    val_test_examples = len(val_loader.dataset.data) // 2 + len(test_loader.dataset.data) // 2
+    val_test_examples = len(val_loader.dataset.data) // 2 + \
+        len(test_loader.dataset.data) // 2
     added_examples = len(pl_data) // 2
-    n = round(eval('lambda x: ' + args.pl_size_func)(x) * val_test_examples) - added_examples
+    n = round(eval('lambda x: ' + args.pl_size_func)
+              (x) * val_test_examples) - added_examples
     n = max(n, 0)
 
     confs = list(filter(lambda x: x[0] not in pl_data, confs))
@@ -400,18 +418,20 @@ def pseudo_label(args, epoch, pl_data, model, val_loader, test_loader, train_loa
 
     logging.info('Pseudo-labeling: Added {} ({} val, {} test), {} ({:.3f}%) val misclassified, '
                  '{} ({:.3f}%) not added, pl_data size {}, train size {}, threshold {}'.format(
-                     n, val_count, test_count, val_misclass, val_misclass / val_count * 100 if val_count != 0 else 0,
-                     not_added_count, not_added_count / (not_added_count + n) * 100 if not_added_count + n != 0 else 0,
+                     n, val_count, test_count, val_misclass, val_misclass /
+                     val_count * 100 if val_count != 0 else 0,
+                     not_added_count, not_added_count /
+                     (not_added_count + n) *
+                     100 if not_added_count + n != 0 else 0,
                      len(pl_data), len(train_loader.dataset.data), confs[-1][1] if len(confs) != 0 else 'None'))
 
 
 def train(args, model):
     train_loader, val_loader = dataset.get_train_val_loader(args)
+    test_loader = dataset.get_test_loader(args, exclude_leak=True)
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=0, weight_decay=args.wd)
-
-    if args.fp16:
-        model, optimizer = amp.initialize(model, optimizer, opt_level='O1')
+    optimizer = torch.optim.Adam(
+        model.parameters(), lr=0, weight_decay=args.wd)
 
     if args.load is not None:
         best_acc = score(args, model, val_loader)
@@ -421,13 +441,7 @@ def train(args, model):
     if args.mode == 'val':
         return
 
-    if args.pl_epoch is not None:
-        test_loader = dataset.get_test_loader(args, exclude_leak=True)
-        pl_data = set()
-
     for epoch in range(args.start_epoch, args.epochs):
-        if args.pl_epoch is not None:
-            pseudo_label(args, epoch, pl_data, model, val_loader, test_loader, train_loader)
 
         with torch.no_grad():
             avg_norm = np.mean([v.norm().item() for v in model.parameters()])
@@ -452,11 +466,7 @@ def train(args, model):
             X, S, Y = transform_input(args, X, S, Y)
 
             loss, acc = model.train_forward(X, S, Y)
-            if args.fp16:
-                with amp.scale_loss(loss, optimizer) as scaled_loss:
-                    scaled_loss.backward()
-            else:
-                loss.backward()
+            loss.backward()
             if (i + 1) % args.gradient_accumulation == 0:
                 optimizer.step()
                 optimizer.zero_grad()
@@ -466,7 +476,8 @@ def train(args, model):
             cum_acc += acc
             if (i + 1) % args.disp_batches == 0:
                 logging.info('Epoch: {:3d} Iter: {:4d}  ->  speed: {:6.1f}   lr: {:.9f}   loss: {:.6f}   acc: {:.6f}'.format(
-                    epoch, i + 1, cum_count * args.batch_size / (time.time() - tic), optimizer.param_groups[0]['lr'],
+                    epoch, i + 1, cum_count * args.batch_size /
+                    (time.time() - tic), optimizer.param_groups[0]['lr'],
                     cum_loss / cum_count, cum_acc / cum_count))
                 cum_loss = 0
                 cum_acc = 0
@@ -481,9 +492,9 @@ def train(args, model):
                 args.save, best_acc))
             # torch.save(model.state_dict(), str(
             #     Path(args.save) / 'best_{}.pth'.format(epoch)))
-            if args.pl_epoch is not None:
-                acc_test = score(args, model, test_loader)
-                logging.info('Test score {}'.format(acc_test))
+            acc_test = score(args, model, test_loader)
+            logging.info('Test score {}'.format(acc_test))
+
 
 def main(args):
     model = ModelAndLoss(args).cuda()
@@ -499,7 +510,6 @@ def main(args):
         predict(args, model)
     else:
         assert 0
-
 
 
 if __name__ == '__main__':
